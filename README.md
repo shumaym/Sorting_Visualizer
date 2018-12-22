@@ -21,4 +21,9 @@ Options:
 *	```-d N | --frame-delay N```: Delay in ms after the window is refreshed (default: 50)
 *	```--dimensions XxY```: Screen dimensions (default: 1000x1000)
 *	```-h | --help```: Display the help page
-*	```-s N | --sorting N```: Sorting method to use (default: quicksort, 0: bubble sort, 1: selection sort, 2: insertion sort, 3: quicksort, 4: mergesort).
+*	```-s N | --sorting N```: Sorting method to use (default: quicksort)
+    - 0: Bubble sort
+    - 1: Selection sort
+    - 2: Insertion sort
+    - 3: Quicksort
+    - 4: Mergesort
