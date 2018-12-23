@@ -64,29 +64,42 @@ void bottom_up_merge(
 
 void heapsort(
 		std::vector<uint16_t>& A,
+		int start_idx,
+		int end_idx,
 		uint16_t num_elems,
 		SDL_Rect bars[],
 		SDL_Renderer *renderer);
 
 void heapify(
 		std::vector<uint16_t>& A,
-		uint16_t count,
+		int start_idx,
+		int end_idx,
 		uint16_t num_elems,
 		SDL_Rect bars[],
 		SDL_Renderer *renderer);
 
 void sift_down(
 		std::vector<uint16_t>& A,
-		uint16_t start,
-		uint16_t end,
+		int start_idx,
+		int start,
+		int end,
 		uint16_t num_elems,
 		SDL_Rect bars[],
 		SDL_Renderer *renderer);
 
-uint16_t heap_parent(uint16_t i);
+uint16_t heap_parent(uint16_t start_idx, uint16_t i);
 
-uint16_t heap_left_child(uint16_t i);
+uint16_t heap_left_child(uint16_t start_idx, uint16_t i);
 
-uint16_t heap_right_child(uint16_t i);
+uint16_t heap_right_child(uint16_t start_idx, uint16_t i);
+
+void introsort(
+		std::vector<uint16_t>& A,
+		int max_depth,
+		int start_idx,
+		int end_idx,
+		uint16_t num_elems,
+		SDL_Rect bars[],
+		SDL_Renderer *renderer);
 
 #endif

@@ -134,7 +134,7 @@ void quicksort(
 		SDL_Renderer *renderer){
 
 	if (start_idx < end_idx){
-		int pivot = quicksort_partition(elems, num_elems, start_idx, end_idx, bars, renderer);
+		int pivot = quicksort_partition(elems, start_idx, end_idx, num_elems, bars, renderer);
 		quicksort(elems, num_elems, start_idx, pivot - 1, bars, renderer);
 		quicksort(elems, num_elems, pivot + 1, end_idx, bars, renderer);
 	}
@@ -145,11 +145,12 @@ void quicksort(
 */
 uint16_t quicksort_partition(
 		std::vector<uint16_t>& elems,
-		uint16_t num_elems,
 		uint16_t start_idx,
 		uint16_t end_idx,
+		uint16_t num_elems,
 		SDL_Rect bars[],
 		SDL_Renderer *renderer){
+
 	std::vector<uint16_t> elems_accessed;
 
 	// Set the pivot to the median of the first, middle, and last elements.
@@ -177,7 +178,8 @@ uint16_t quicksort_partition(
 		elems_accessed.push_back(j);
 		create_frame(elems, num_elems, renderer, bars, elems_accessed);
 	}
-	std::swap(elems[i], elems[end_idx]);
+	if (i < end_idx)
+		std::swap(elems[i], elems[end_idx]);
 	
 	// Visualization code below.
 	elems_accessed.push_back(i);
@@ -243,24 +245,26 @@ void bottom_up_merge(
 */
 void heapsort(
 		std::vector<uint16_t>& A,
+		int start_idx,
+		int end_idx,
 		uint16_t num_elems,
 		SDL_Rect bars[],
 		SDL_Renderer *renderer){
 
 	std::vector<uint16_t> elems_accessed;
-	heapify(A, num_elems, num_elems, bars, renderer);
+	heapify(A, start_idx, end_idx, num_elems, bars, renderer);
 
-	int end = num_elems - 1;
-	while (end > 0){
-		std::swap(A[end], A[0]);
+	int end = end_idx;
+	while (end > start_idx){
+		std::swap(A[end], A[start_idx]);
 
 		// Visualization code below.
-		elems_accessed.push_back(0);
+		elems_accessed.push_back(start_idx);
 		elems_accessed.push_back(end);
 		create_frame(A, num_elems, renderer, bars, elems_accessed);
 
 		end--;
-		sift_down(A, 0, end, num_elems, bars, renderer);
+		sift_down(A, start_idx, start_idx, end, num_elems, bars, renderer);
 	}
 }
 
@@ -269,13 +273,14 @@ void heapsort(
 */
 void heapify(
 		std::vector<uint16_t>& A,
-		uint16_t count,
+		int start_idx,
+		int end_idx,
 		uint16_t num_elems,
 		SDL_Rect bars[],
 		SDL_Renderer *renderer){
 
-	for (int start = heap_parent(num_elems); start >= 0; start--)
-		sift_down(A, start, count - 1, num_elems, bars, renderer);
+	for (int sift_idx = heap_parent(start_idx, end_idx); sift_idx >= start_idx; sift_idx--)
+		sift_down(A, start_idx, sift_idx, end_idx, num_elems, bars, renderer);
 }
 
 /**
@@ -283,22 +288,23 @@ void heapify(
 */
 void sift_down(
 		std::vector<uint16_t>& A,
-		uint16_t start,
-		uint16_t end,
+		int start_idx,
+		int sift_idx,
+		int end_idx,
 		uint16_t num_elems,
 		SDL_Rect bars[],
 		SDL_Renderer *renderer){
 
 	std::vector<uint16_t> elems_accessed;
-	int root = start;
+	int root = sift_idx;
 	int child, swap;
-	while (heap_left_child(root) <= end){
-		child = heap_left_child(root);
+	while (heap_left_child(start_idx, root) <= end_idx){
+		child = heap_left_child(start_idx, root);
 		swap = root;
 
 		if (A[swap] < A[child])
 			swap = child;
-		if (child+1 <= end && A[swap] < A[child+1])
+		if (child+1 <= end_idx && A[swap] < A[child+1])
 			swap = child + 1;
 		if (swap == root)
 			return;
@@ -310,7 +316,7 @@ void sift_down(
 		// Visualization code below.
 		elems_accessed.push_back(root);
 		elems_accessed.push_back(child);
-		if (child+1 <= end)
+		if (child+1 <= end_idx)
 			elems_accessed.push_back(child+1);
 		create_frame(A, num_elems, renderer, bars, elems_accessed);
 	}
@@ -319,20 +325,47 @@ void sift_down(
 /**
 * Returns the index of the parent of the given heap node.
 */
-uint16_t heap_parent(uint16_t i){
-	return std::floor((i-1) / 2);
+uint16_t heap_parent(uint16_t start_idx, uint16_t i){
+	return start_idx + std::floor((i - start_idx - 1) / 2);
 }
 
 /**
 * Returns the index of the left child of the given heap node.
 */
-uint16_t heap_left_child(uint16_t i){
-	return 2*i + 1;
+uint16_t heap_left_child(uint16_t start_idx, uint16_t i){
+	return start_idx + 2*(i - start_idx) + 1;
 }
 
 /**
 * Returns the index of the right child of the given heap node.
 */
-uint16_t heap_right_child(uint16_t i){
-	return 2*i + 2;
+uint16_t heap_right_child(uint16_t start_idx, uint16_t i){
+	return start_idx + 2*(i - start_idx) + 2;
+}
+
+/**
+* Introsort, averages O(n*log(n)) time.
+* Uses quicksort until a bad case is encountered,
+* then switches to heapsort for the current subsection.
+*/
+void introsort(
+		std::vector<uint16_t>& A,
+		int max_depth,
+		int start_idx,
+		int end_idx,
+		uint16_t num_elems,
+		SDL_Rect bars[],
+		SDL_Renderer *renderer){
+
+	std::vector<uint16_t> elems_accessed;
+	int pivot = quicksort_partition(A, start_idx, end_idx, num_elems, bars, renderer);
+	if (end_idx - start_idx <= 1)
+		return;
+	else if (max_depth == 0){
+		heapsort(A, start_idx, end_idx, num_elems, bars, renderer);
+	}
+	else{
+		introsort(A, max_depth - 1, start_idx, pivot, num_elems, bars, renderer);
+		introsort(A, max_depth - 1, pivot + 1, end_idx, num_elems, bars, renderer);
+	}
 }

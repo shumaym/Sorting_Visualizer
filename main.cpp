@@ -4,6 +4,7 @@
 #include <vector>
 #include <algorithm>
 #include <random>
+#include <math.h>
 #include <signal.h>
 #include <getopt.h>
 #include <sstream>
@@ -20,13 +21,14 @@ const option long_opts[] = {
 	{0,0,0,0}
 };
 
-const std::string sort_method_names[6] = {
+const std::string sort_method_names[7] = {
 	"bubble sort",
 	"selection sort",
 	"insertion sort",
 	"quicksort",
 	"mergesort",
-	"heapsort"};
+	"heapsort",
+	"introsort"};
 
 // Screen properties.
 uint16_t screen_width = 1500;
@@ -92,6 +94,7 @@ int main(int argc, char *argv[]){
 				std::cout << "    3: quicksort" << std::endl;
 				std::cout << "    4: mergesort" << std::endl;
 				std::cout << "    5: heapsort" << std::endl;
+				std::cout << "    6: heapsort" << std::endl;
 
 				std::cout << std::endl << std::endl;
 				return 0;
@@ -115,7 +118,7 @@ int main(int argc, char *argv[]){
 				break;
 
 			case 's':
-				if (std::atoi(optarg) >= 0 && std::atoi(optarg) <= 5){
+				if (std::atoi(optarg) >= 0 && std::atoi(optarg) < 7){
 					sort_method = std::atoi(optarg);
 					std::cout << "Sorting method set to " << sort_method_names[sort_method] << "." << std::endl;
 				}
@@ -195,7 +198,11 @@ int main(int argc, char *argv[]){
 			bottom_up_mergesort(elems, num_elems, bars, renderer);
 			break;
 		case 5:
-			heapsort(elems, num_elems, bars, renderer);
+			heapsort(elems, 0, num_elems, num_elems, bars, renderer);
+			break;
+		case 6:
+			int depth = std::floor(log(num_elems)) * 2;
+			introsort(elems, depth, 0, num_elems - 1, num_elems, bars, renderer);
 			break;
 	}
 

@@ -28,3 +28,4 @@ Options:
     - ```3```: Quicksort
     - ```4```: Mergesort
     - ```5```: Heapsort
+    - ```6```: Introsort
