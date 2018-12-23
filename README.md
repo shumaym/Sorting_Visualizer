@@ -1,4 +1,4 @@
-# Sorting_Visualizer
+# Sorting Visualizer
 
 This program provides a visual representation of various sorting algorithms.
 
@@ -8,7 +8,7 @@ This program provides a visual representation of various sorting algorithms.
 ## Usage
 Build with:
 ```
-g++ main.cpp -lSDL2 -std=c++11 -O3 -o sorting
+g++ main.cpp cpp_files/*.cpp -lSDL2 -std=c++11 -O3 -o sorting
 ```
 
 Run with:
@@ -19,11 +19,12 @@ Run with:
 Options:
 *	```-n N```: Number of elements in the set (default: 50)
 *	```-d N | --frame-delay N```: Delay in ms after the window is refreshed (default: 50)
-*	```--dimensions XxY```: Screen dimensions (default: 1000x1000)
+*	```--dimensions XxY```: Screen dimensions (default: 1500x1000)
 *	```-h | --help```: Display the help page
 *	```-s N | --sorting N```: Sorting method to use (default: quicksort)
-    - 0: Bubble sort
-    - 1: Selection sort
-    - 2: Insertion sort
-    - 3: Quicksort
-    - 4: Mergesort
+    - ```0```: Bubble sort
+    - ```1```: Selection sort
+    - ```2```: Insertion sort
+    - ```3```: Quicksort
+    - ```4```: Mergesort
+    - ```5```: Heapsort
