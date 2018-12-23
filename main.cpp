@@ -210,6 +210,13 @@ int main(int argc, char *argv[]){
 	create_bars(elems, num_elems, bars);
 	std::vector<uint16_t> elems_accessed;
 	draw_bars(num_elems, renderer, bars, elems_accessed);
+
+	if (check_sorted(elems, num_elems))
+		std::cout << "Sorted!" << std::endl;
+	else
+		std::cout << "Sorting Failure!" << std::endl;
+		
+
 	// Pauses after sorting is complete
 	SDL_Delay(2000);
 }

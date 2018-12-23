@@ -1,6 +1,7 @@
 #include <SDL2/SDL.h>
 #include <vector>
 #include <algorithm>
+#include <iostream>
 
 #include "../headers/algorithms.h"
 
@@ -28,10 +29,19 @@ void bogo_sort(
 
 	bool flag_sorted = false;
 	std::vector<uint16_t> elems_accessed;	
+	SDL_Event event;
 	
 	while (!flag_sorted){
 		std::shuffle(elems.begin(), elems.end(), generator);
 		create_frame(elems, num_elems, renderer, bars, elems_accessed);
+
+		// Check for requested shutdown.
+		while (SDL_PollEvent(&event))
+			if (event.type == SDL_QUIT){
+				std::cout << std::endl << "Exiting." << std::endl;
+				exit(0);
+			}
+
 		flag_sorted = check_sorted(elems, num_elems);
 	}
 }
@@ -44,8 +54,9 @@ void bubble_sort(
 		uint16_t num_elems,
 		SDL_Rect bars[],
 		SDL_Renderer *renderer){
-	std::vector<uint16_t> elems_accessed;	
 
+	std::vector<uint16_t> elems_accessed;	
+	SDL_Event event;
 	int i, j;
 	bool sorted = false;
 	for (i = 0; i < num_elems - 1 && !sorted; i++){
@@ -60,6 +71,13 @@ void bubble_sort(
 			elems_accessed.push_back(j);
 			elems_accessed.push_back(j + 1);
 			create_frame(elems, num_elems, renderer, bars, elems_accessed);
+
+			// Check for requested shutdown.
+			while (SDL_PollEvent(&event))
+				if (event.type == SDL_QUIT){
+					std::cout << std::endl << "Exiting." << std::endl;
+					exit(0);
+				}
 		}
 	}
 }
@@ -74,6 +92,7 @@ void selection_sort(
 		SDL_Renderer *renderer){
 
 	std::vector<uint16_t> elems_accessed;
+	SDL_Event event;
 	int i, j, min;
 	int n = elems.size();
 
@@ -87,6 +106,13 @@ void selection_sort(
 			elems_accessed.push_back(min);
 			elems_accessed.push_back(j);
 			create_frame(elems, num_elems, renderer, bars, elems_accessed);
+
+			// Check for requested shutdown.
+			while (SDL_PollEvent(&event))
+				if (event.type == SDL_QUIT){
+					std::cout << std::endl << "Exiting." << std::endl;
+					exit(0);
+				}
 		}
 		if (min != i){
 			std::swap(elems[min], elems[i]);
@@ -109,6 +135,7 @@ void insertion_sort(
 		SDL_Renderer *renderer){
 
 	std::vector<uint16_t> elems_accessed;
+	SDL_Event event;
 	int i, j;
 	for (i = 1; i < elems.size(); i++){
 		for (j = i; j > 0 && elems[j - 1] > elems[j]; j--){
@@ -118,6 +145,13 @@ void insertion_sort(
 			elems_accessed.push_back(j);
 			elems_accessed.push_back(j - 1);
 			create_frame(elems, num_elems, renderer, bars, elems_accessed);
+
+			// Check for requested shutdown.
+			while (SDL_PollEvent(&event))
+				if (event.type == SDL_QUIT){
+					std::cout << std::endl << "Exiting." << std::endl;
+					exit(0);
+				}
 		}
 	}
 }
@@ -152,6 +186,7 @@ uint16_t quicksort_partition(
 		SDL_Renderer *renderer){
 
 	std::vector<uint16_t> elems_accessed;
+	SDL_Event event;
 
 	// Set the pivot to the median of the first, middle, and last elements.
 	int mid_idx = (start_idx + end_idx) / 2;
@@ -177,6 +212,13 @@ uint16_t quicksort_partition(
 		elems_accessed.push_back(end_idx);
 		elems_accessed.push_back(j);
 		create_frame(elems, num_elems, renderer, bars, elems_accessed);
+		
+		// Check for requested shutdown.
+		while (SDL_PollEvent(&event))
+			if (event.type == SDL_QUIT){
+				std::cout << std::endl << "Exiting." << std::endl;
+				exit(0);
+			}
 	}
 	if (i < end_idx)
 		std::swap(elems[i], elems[end_idx]);
@@ -199,8 +241,9 @@ void bottom_up_mergesort(
 		SDL_Renderer *renderer){
 
 	std::vector<uint16_t> B(A);
-	for (int width = 1; width < num_elems; width = 2 * width){
-		for (int i = 0; i < num_elems; i = i + 2 * width)
+	int width, i;
+	for (width = 1; width < num_elems; width = 2 * width){
+		for (i = 0; i < num_elems; i = i + 2 * width)
 			bottom_up_merge(A, i, std::min(i+width, (int) num_elems), std::min(i+2*width, (int) num_elems), B, num_elems, bars, renderer);
 		// Copy B into A.
 		A = B;
@@ -220,10 +263,14 @@ void bottom_up_merge(
 		SDL_Rect bars[],
 		SDL_Renderer *renderer){
 
+	SDL_Event event;
 	std::vector<uint16_t> elems_accessed;
 	int i = left_idx;
 	int j = right_idx;
-	for (int k = left_idx; k < end_idx; k++){
+	int k;
+	for (k = left_idx; k < end_idx; k++){
+		elems_accessed.push_back(i);
+		elems_accessed.push_back(j);
 		if (i < right_idx && (j >= end_idx || A[i] <= A[j])){
 			B[k] = A[i];
 			i++;
@@ -233,10 +280,15 @@ void bottom_up_merge(
 		}
 
 		// Visualization code below.
-		elems_accessed.push_back(i);
-		elems_accessed.push_back(j);
 		elems_accessed.push_back(k);
 		create_frame(B, num_elems, renderer, bars, elems_accessed);
+
+		// Check for requested shutdown.
+		while (SDL_PollEvent(&event))
+			if (event.type == SDL_QUIT){
+				std::cout << std::endl << "Exiting." << std::endl;
+				exit(0);
+			}
 	}
 }
 
@@ -252,10 +304,18 @@ void heapsort(
 		SDL_Renderer *renderer){
 
 	std::vector<uint16_t> elems_accessed;
+	SDL_Event event;
 	heapify(A, start_idx, end_idx, num_elems, bars, renderer);
 
 	int end = end_idx;
 	while (end > start_idx){
+		// Check for requested shutdown.
+		while (SDL_PollEvent(&event))
+			if (event.type == SDL_QUIT){
+				std::cout << std::endl << "Exiting." << std::endl;
+				exit(0);
+			}
+		
 		std::swap(A[end], A[start_idx]);
 
 		// Visualization code below.
@@ -279,8 +339,17 @@ void heapify(
 		SDL_Rect bars[],
 		SDL_Renderer *renderer){
 
-	for (int sift_idx = heap_parent(start_idx, end_idx); sift_idx >= start_idx; sift_idx--)
+	SDL_Event event;
+	int sift_idx;
+	for (sift_idx = heap_parent(start_idx, end_idx); sift_idx >= start_idx; sift_idx--){
+		// Check for requested shutdown.
+		while (SDL_PollEvent(&event))
+			if (event.type == SDL_QUIT){
+				std::cout << std::endl << "Exiting." << std::endl;
+				exit(0);
+			}
 		sift_down(A, start_idx, sift_idx, end_idx, num_elems, bars, renderer);
+	}
 }
 
 /**
