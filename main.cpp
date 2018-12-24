@@ -57,6 +57,7 @@ uint32_t num_swaps = 0;
 
 SDL_Renderer *renderer;
 TTF_Font *g_font;
+SDL_Surface *text_surface;
 SDL_Texture *text_texture;
 SDL_Event event;
 

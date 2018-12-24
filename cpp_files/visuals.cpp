@@ -45,11 +45,9 @@ void draw_bars(){
 * Draw to the screen the text specifying the number of comparisons and swaps.
 */
 void draw_text(){
-	SDL_Color text_colour = {255, 255, 255};
-	SDL_Color bg_colour= {0, 0, 0};
 	std::string text_top = "Comparisons: " + std::to_string(num_comps);
 	text_top += "    Swaps: " + std::to_string(num_swaps);
-	SDL_Surface *text_surface = TTF_RenderText_Shaded(g_font, text_top.c_str(), text_colour, bg_colour);
+	text_surface = TTF_RenderText_Shaded(g_font, text_top.c_str(), {255, 255, 255}, {0, 0, 0});
 
 	int x = screen_width * SCREEN_MARGINS;
 	int y = screen_height * SCREEN_MARGINS * 0.15;
@@ -57,10 +55,12 @@ void draw_text(){
 	int text_width = text_surface->w;
 	int text_height = text_surface->h;
 
-	SDL_Rect text_rect = {x, y, text_width, text_height};
+	SDL_Rect text_rect = SDL_Rect{x, y, text_width, text_height};
 	text_texture = SDL_CreateTextureFromSurface(renderer, text_surface);
 	SDL_RenderCopy(renderer, text_texture, NULL, &text_rect);
 
+	SDL_DestroyTexture(text_texture);
+	SDL_FreeSurface(text_surface);
 }
 
 /**

@@ -33,6 +33,7 @@ extern uint32_t num_swaps;
 
 extern SDL_Renderer *renderer;
 extern TTF_Font *g_font;
+extern SDL_Surface *text_surface;
 extern SDL_Texture *text_texture;
 extern SDL_Event event;
 
