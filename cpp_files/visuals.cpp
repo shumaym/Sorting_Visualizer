@@ -1,16 +1,9 @@
-#include <SDL2/SDL.h>
-#include <vector>
-
 #include "../headers/visuals.h"
 
 /**
 * Compute the dimensions of all bars, each representing an element in the list.
 */
-void create_bars(
-		std::vector<uint16_t>& elems,
-		uint16_t num_elems,
-		SDL_Rect bars[]){
-
+void create_bars(std::vector<uint16_t>& elems){
 	float bar_section_width = screen_width * (1 - 2 * SCREEN_MARGINS) / num_elems;
 	uint16_t bar_width = bar_section_width * (1 - BAR_SEPARATION);
 	
@@ -35,41 +28,55 @@ void create_bars(
 }
 
 /**
-* Draw the element bars to the screen, using the appropriate colours.
+* Draw to the screen the element bars, using the appropriate colours.
 */
-void draw_bars(
-		uint16_t num_elems,
-		SDL_Renderer *renderer,
-		SDL_Rect bars[],
-		std::vector<uint16_t>& elems_accessed){
-
-	// Clear the renderer.
-	SDL_SetRenderDrawColor(renderer, COLOUR_BACKGROUND[0], COLOUR_BACKGROUND[1], COLOUR_BACKGROUND[2], 0xFF);
-	SDL_RenderClear(renderer);
-
+void draw_bars(){
 	// Draw all bars in white.
 	SDL_SetRenderDrawColor(renderer, COLOUR_BARS_WHITE[0], COLOUR_BARS_WHITE[1], COLOUR_BARS_WHITE[2], 0xFF);
 	SDL_RenderFillRects(renderer, bars, num_elems);
 
 	// Draw accessed elements' bars again, but in red.
 	SDL_SetRenderDrawColor(renderer, COLOUR_BARS_RED[0], COLOUR_BARS_RED[1], COLOUR_BARS_RED[2], 0xFF);
-	for (int i = 0; i < elems_accessed.size(); i++){
+	for (uint16_t i = 0; i < elems_accessed.size(); i++)
 		SDL_RenderFillRect(renderer, &bars[elems_accessed[i]]);
-	}
+}
+
+/**
+* Draw to the screen the text specifying the number of comparisons and swaps.
+*/
+void draw_text(){
+	SDL_Color text_colour = {255, 255, 255};
+	SDL_Color bg_colour= {0, 0, 0};
+	std::string text_top = "Comparisons: " + std::to_string(num_comps);
+	text_top += "    Swaps: " + std::to_string(num_swaps);
+	SDL_Surface *text_surface = TTF_RenderText_Shaded(g_font, text_top.c_str(), text_colour, bg_colour);
+
+	int x = screen_width * SCREEN_MARGINS;
+	int y = screen_height * SCREEN_MARGINS * 0.15;
+
+	int text_width = text_surface->w;
+	int text_height = text_surface->h;
+
+	SDL_Rect text_rect = {x, y, text_width, text_height};
+	text_texture = SDL_CreateTextureFromSurface(renderer, text_surface);
+	SDL_RenderCopy(renderer, text_texture, NULL, &text_rect);
+
+}
+
+/**
+* Manages the creation and displaying of a new visual frame.
+*/
+void create_frame(std::vector<uint16_t>& elems){
+	// Clear the renderer.
+	SDL_SetRenderDrawColor(renderer, COLOUR_BACKGROUND[0], COLOUR_BACKGROUND[1], COLOUR_BACKGROUND[2], 0xFF);
+	SDL_RenderClear(renderer);
+
+	create_bars(elems);
+	draw_bars();
+	draw_text();
 
 	// Update the screen.
 	SDL_RenderPresent(renderer);
-}
-
-void create_frame(
-		std::vector<uint16_t>& elems,
-		uint16_t num_elems,
-		SDL_Renderer *renderer,
-		SDL_Rect bars[],
-		std::vector<uint16_t>& elems_accessed){
-
-	create_bars(elems, num_elems, bars);
-	draw_bars(num_elems, renderer, bars, elems_accessed);
 	elems_accessed.clear();
 	SDL_Delay(frame_delay_ms);
 }

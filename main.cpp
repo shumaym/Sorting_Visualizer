@@ -1,9 +1,3 @@
-#include <SDL2/SDL.h>
-
-#include <iostream>
-#include <vector>
-#include <algorithm>
-#include <random>
 #include <math.h>
 #include <signal.h>
 #include <getopt.h>
@@ -33,7 +27,7 @@ const std::string sort_method_names[7] = {
 // Screen properties.
 uint16_t screen_width = 1500;
 uint16_t screen_height = 1000;
-const float SCREEN_MARGINS = 0.05;
+const float SCREEN_MARGINS = 0.075;
 const float BAR_SEPARATION = 0.2;
 
 // RGB colour values.
@@ -49,6 +43,23 @@ uint16_t sort_method = 3;
 std::random_device random_dev;
 std::mt19937 generator(random_dev());
 
+// Stores the list of elements to sort
+std::vector<uint16_t> elems;
+// Tracks which indices of (elems) have been accessed in a period of operations
+std::vector<uint16_t> elems_accessed;
+// Holds the rectangles that visually represent the elements in (elems)
+SDL_Rect *bars;
+
+// Records the number of element comparisons
+uint32_t num_comps = 0;
+// Records the number of element swaps
+uint32_t num_swaps = 0;
+
+SDL_Renderer *renderer;
+TTF_Font *g_font;
+SDL_Texture *text_texture;
+SDL_Event event;
+
 /**
 * Log an SDL error with some error message
 * @param msg: The error message to write, format will be msg error: SDL_GetError()
@@ -61,7 +72,7 @@ void log_SDL_error(const std::string &msg){
 * Handles interrupts, sets a flag to discontinue computation.
 */
 void signal_interrupt(int _){
-	std::cout << std::endl << "Exiting." << std::endl;
+	std::cout << std::endl << "Exiting\n";
 	exit(0);
 }
 
@@ -74,6 +85,14 @@ void print_elems(std::vector<uint16_t>& elems, uint16_t num_elems){
 	std::cout << std::endl;
 }
 
+/**
+* Load in the ttf font that will be used for text output.
+*/
+void load_font(){
+	int font_size = screen_height * SCREEN_MARGINS / 3;
+	g_font = TTF_OpenFont("fonts/Roboto/Roboto-Regular.ttf", font_size);
+}
+
 int main(int argc, char *argv[]){
 	signal(SIGINT, signal_interrupt);
 
@@ -82,20 +101,19 @@ int main(int argc, char *argv[]){
 	while(prev_ind = optind, (opt = getopt_long(argc, argv, "hn:d:s:", long_opts, &optind)) != EOF){
 		switch(opt){
 			case 'h':
-				std::cout << std::endl << "Options:" << std::endl;
-				std::cout << " -n N                        number of elements to sort (default: " << num_elems << ")" << std::endl;
-				std::cout << " -d N, --frame-delay N       delay in ms after the window is refreshed (default: " << frame_delay_ms << ")" << std::endl;
-				std::cout << " --dimensions XxY            screen dimensions (default: " << screen_width << "x" << screen_height << ")" << std::endl;
-				std::cout << " -h, --help                  display this help page and exit" << std::endl;
-				std::cout << " -s N, sorting N             sorting method (default: quicksort)" << std::endl;
-				std::cout << "    0: bubble sort" << std::endl;
-				std::cout << "    1: selection sort" << std::endl;
-				std::cout << "    2: insertion sort" << std::endl;
-				std::cout << "    3: quicksort" << std::endl;
-				std::cout << "    4: mergesort" << std::endl;
-				std::cout << "    5: heapsort" << std::endl;
-				std::cout << "    6: heapsort" << std::endl;
-
+				std::cout << std::endl << "Options:\n";
+				std::cout << " -n N                        number of elements to sort (default: " << num_elems << ")\n";
+				std::cout << " -d N, --frame-delay N       delay in ms after the window is refreshed (default: " << frame_delay_ms << ")\n";
+				std::cout << " --dimensions XxY            screen dimensions (default: " << screen_width << "x" << screen_height << ")\n";
+				std::cout << " -h, --help                  display this help page and exit\n";
+				std::cout << " -s N, sorting N             sorting method (default: quicksort)\n";
+				std::cout << "    0: bubble sort\n";
+				std::cout << "    1: selection sort\n";
+				std::cout << "    2: insertion sort\n";
+				std::cout << "    3: quicksort\n";
+				std::cout << "    4: mergesort\n";
+				std::cout << "    5: heapsort\n";
+				std::cout << "    6: introsort\n";
 				std::cout << std::endl << std::endl;
 				return 0;
 
@@ -105,7 +123,7 @@ int main(int argc, char *argv[]){
 					std::cout << "Frame delay set to " << frame_delay_ms << " ms." << std::endl;
 				}
 				else
-					std::cout << "Invalid frame delay. Defaulting to " << frame_delay_ms << " ms." << std::endl;
+					std::cerr << "Invalid frame delay. Defaulting to " << frame_delay_ms << " ms." << std::endl;
 				break;
 
 			case 'n':
@@ -114,7 +132,7 @@ int main(int argc, char *argv[]){
 					std::cout << "Number of elements set to " << num_elems << "." << std::endl;
 				}
 				else
-					std::cout << "Invalid number of elements. Defaulting to " << num_elems << "." << std::endl;
+					std::cerr << "Invalid number of elements. Defaulting to " << num_elems << "." << std::endl;
 				break;
 
 			case 's':
@@ -123,7 +141,7 @@ int main(int argc, char *argv[]){
 					std::cout << "Sorting method set to " << sort_method_names[sort_method] << "." << std::endl;
 				}
 				else
-					std::cout << "Invalid sorting method. Defaulting to " << sort_method_names[sort_method] << "." << std::endl;
+					std::cerr << "Invalid sorting method. Defaulting to " << sort_method_names[sort_method] << "." << std::endl;
 				break;
 
 			case 'z':
@@ -137,7 +155,7 @@ int main(int argc, char *argv[]){
 					num_items++;
 				}
 				if (num_items != 2 || split_strings[0] <= 0 || split_strings[1] <= 0)
-					std::cout << "Invalid screen dimensions. Defaulting to " << screen_width << "x" << screen_height << std::endl;
+					std::cerr << "Invalid screen dimensions. Defaulting to " << screen_width << "x" << screen_height << std::endl;
 				else{
 					screen_width = split_strings[0];
 					screen_height = split_strings[1];
@@ -164,7 +182,7 @@ int main(int argc, char *argv[]){
 	}
 
 	// Create renderer
-	SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, 0);	
+	renderer = SDL_CreateRenderer(window, -1, 0);
 	if (renderer == nullptr){
 		log_SDL_error("CreateRenderer");
 		SDL_DestroyWindow(window);
@@ -172,51 +190,77 @@ int main(int argc, char *argv[]){
 		return 1;
 	}
 
+	// Initialize SDL's True Type Fonts functionality
+	if (TTF_Init() < 0) {
+ 		std::cerr << "SDL_ttf could not initialize! SDL_ttf Error: " << TTF_GetError() << std::endl;
+		SDL_DestroyWindow(window);
+		SDL_DestroyRenderer(renderer);
+		SDL_Quit();
+		return 1;
+	}
+
+	// Load the TTF font
+	load_font();
+	if (g_font == NULL){
+		std::cerr << "Font load error." << std::endl;
+		SDL_DestroyWindow(window);
+		SDL_DestroyRenderer(renderer);
+		SDL_Quit();
+		return 1;
+	}
+
 	// Create and shuffle (num_elems) elements
-	std::vector<uint16_t> elems(num_elems);
+	std::vector<uint16_t>(num_elems).swap(elems);
 	std::iota(std::begin(elems), std::end(elems), 1);
 	std::shuffle(elems.begin(), elems.end(), generator);
 
-	// Create array for the bars
-	SDL_Rect bars[num_elems];
+	// Create array for the bar Rects
+	SDL_Rect arr[num_elems];
+	bars = arr;
 
 	// Sort using the specified/default sort method
 	switch(sort_method){
 		case 0:
-			bubble_sort(elems, num_elems, bars, renderer);
+			bubble_sort();
 			break;
 		case 1:
-			selection_sort(elems, num_elems, bars, renderer);
+			selection_sort();
 			break;
 		case 2:
-			insertion_sort(elems, num_elems, bars, renderer);
+			insertion_sort();
 			break;
 		case 3:
-			quicksort(elems, num_elems, 0, num_elems - 1, bars, renderer);
+			quicksort(0, num_elems - 1);
 			break;
 		case 4:
-			bottom_up_mergesort(elems, num_elems, bars, renderer);
+			bottom_up_mergesort();
 			break;
 		case 5:
-			heapsort(elems, 0, num_elems, num_elems, bars, renderer);
+			heapsort(0, num_elems);
 			break;
 		case 6:
 			int depth = std::floor(log(num_elems)) * 2;
-			introsort(elems, depth, 0, num_elems - 1, num_elems, bars, renderer);
+			introsort(depth, 0, num_elems - 1);
 			break;
 	}
 
 	// Show sorted list
-	create_bars(elems, num_elems, bars);
-	std::vector<uint16_t> elems_accessed;
-	draw_bars(num_elems, renderer, bars, elems_accessed);
+	create_frame(elems);
 
-	if (check_sorted(elems, num_elems))
-		std::cout << "Sorted!" << std::endl;
+	if (check_sorted(elems))
+		std::cout << "\nSorted!\n\n";
 	else
-		std::cout << "Sorting Failure!" << std::endl;
+		std::cerr << "\nError: Sorting Failure!\n\n";
 		
+	std::cout << "Total comparisons: " << num_comps << std::endl;
+	std::cout << "Total swaps: " << num_swaps << std::endl;
 
-	// Pauses after sorting is complete
+	// Pause after sorting is complete
 	SDL_Delay(2000);
+
+	// Free and destroy
+	std::vector<uint16_t>().swap(elems);
+	SDL_DestroyWindow(window);
+	SDL_DestroyRenderer(renderer);
+	SDL_Quit();
 }

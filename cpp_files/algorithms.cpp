@@ -1,14 +1,9 @@
-#include <SDL2/SDL.h>
-#include <vector>
-#include <algorithm>
-#include <iostream>
-
 #include "../headers/algorithms.h"
 
 /**
 * Checks if a vector contains a sorted sequence of elements.
 */
-int check_sorted(std::vector<uint16_t>& elems, uint16_t num_elems){
+int check_sorted(std::vector<uint16_t>& elems){
 	int last_elem = elems[0];
 	for (int i = 1; i < num_elems; i++){
 		if (elems[i] < last_elem)
@@ -21,42 +16,17 @@ int check_sorted(std::vector<uint16_t>& elems, uint16_t num_elems){
 /**
 * A spectacularly inefficient sorting method, averages O((n+1)!) time.
 */
-void bogo_sort(
-		std::vector<uint16_t>& elems,
-		uint16_t num_elems,
-		SDL_Rect bars[],
-		SDL_Renderer *renderer){
-
-	bool flag_sorted = false;
-	std::vector<uint16_t> elems_accessed;	
-	SDL_Event event;
-	
-	while (!flag_sorted){
+void bogo_sort(){
+	while (!check_sorted(elems)){
 		std::shuffle(elems.begin(), elems.end(), generator);
-		create_frame(elems, num_elems, renderer, bars, elems_accessed);
-
-		// Check for requested shutdown.
-		while (SDL_PollEvent(&event))
-			if (event.type == SDL_QUIT){
-				std::cout << std::endl << "Exiting." << std::endl;
-				exit(0);
-			}
-
-		flag_sorted = check_sorted(elems, num_elems);
+		create_frame(elems);
 	}
 }
 
 /**
 * Bubble sort, averages O(n^2) time.
 */
-void bubble_sort(
-		std::vector<uint16_t>& elems,
-		uint16_t num_elems,
-		SDL_Rect bars[],
-		SDL_Renderer *renderer){
-
-	std::vector<uint16_t> elems_accessed;	
-	SDL_Event event;
+void bubble_sort(){
 	int i, j;
 	bool sorted = false;
 	for (i = 0; i < num_elems - 1 && !sorted; i++){
@@ -64,20 +34,17 @@ void bubble_sort(
 		for (j = 0; j < num_elems - i - 1; j++){
 			if (elems[j] > elems[j + 1]){
 				std::swap(elems[j], elems[j + 1]);
+				num_swaps++;
 				sorted = false;
 			}
+			num_comps++;
 			
 			// Visualization code below.
 			elems_accessed.push_back(j);
 			elems_accessed.push_back(j + 1);
-			create_frame(elems, num_elems, renderer, bars, elems_accessed);
+			create_frame(elems);
 
-			// Check for requested shutdown.
-			while (SDL_PollEvent(&event))
-				if (event.type == SDL_QUIT){
-					std::cout << std::endl << "Exiting." << std::endl;
-					exit(0);
-				}
+			check_exit();
 		}
 	}
 }
@@ -85,14 +52,7 @@ void bubble_sort(
 /**
 * Selection sort, averages O(n^2) time.
 */
-void selection_sort(
-		std::vector<uint16_t>& elems,
-		uint16_t num_elems,
-		SDL_Rect bars[],
-		SDL_Renderer *renderer){
-
-	std::vector<uint16_t> elems_accessed;
-	SDL_Event event;
+void selection_sort(){
 	int i, j, min;
 	int n = elems.size();
 
@@ -101,26 +61,23 @@ void selection_sort(
 		for (j = i + 1; j < n; j++){
 			if (elems[j] < elems[min])
 				min = j;
+			num_comps++;
 
 			// Visualization code below.
 			elems_accessed.push_back(min);
 			elems_accessed.push_back(j);
-			create_frame(elems, num_elems, renderer, bars, elems_accessed);
+			create_frame(elems);
 
-			// Check for requested shutdown.
-			while (SDL_PollEvent(&event))
-				if (event.type == SDL_QUIT){
-					std::cout << std::endl << "Exiting." << std::endl;
-					exit(0);
-				}
+			check_exit();
 		}
 		if (min != i){
 			std::swap(elems[min], elems[i]);
+			num_swaps++;
 
 			// Visualization code below.
 			elems_accessed.push_back(min);
 			elems_accessed.push_back(i);
-			create_frame(elems, num_elems, renderer, bars, elems_accessed);
+			create_frame(elems);
 		}
 	}
 }
@@ -128,30 +85,20 @@ void selection_sort(
 /**
 * Insertion sort, averages O(n^2) time.
 */
-void insertion_sort(
-		std::vector<uint16_t>& elems,
-		uint16_t num_elems,
-		SDL_Rect bars[],
-		SDL_Renderer *renderer){
-
-	std::vector<uint16_t> elems_accessed;
-	SDL_Event event;
-	int i, j;
-	for (i = 1; i < elems.size(); i++){
+void insertion_sort(){
+	int j;
+	for (uint16_t i = 1; i < elems.size(); i++){
 		for (j = i; j > 0 && elems[j - 1] > elems[j]; j--){
+			num_comps++;
 			std::swap(elems[j], elems[j - 1]);
+			num_swaps++;
 
 			// Visualization code below.
 			elems_accessed.push_back(j);
 			elems_accessed.push_back(j - 1);
-			create_frame(elems, num_elems, renderer, bars, elems_accessed);
+			create_frame(elems);
 
-			// Check for requested shutdown.
-			while (SDL_PollEvent(&event))
-				if (event.type == SDL_QUIT){
-					std::cout << std::endl << "Exiting." << std::endl;
-					exit(0);
-				}
+			check_exit();
 		}
 	}
 }
@@ -159,74 +106,59 @@ void insertion_sort(
 /**
 * Quicksort, averages O(n*log(n)) time.
 */
-void quicksort(
-		std::vector<uint16_t>& elems,
-		uint16_t num_elems,
-		int start_idx,
-		int end_idx,
-		SDL_Rect bars[],
-		SDL_Renderer *renderer){
-
+void quicksort(int start_idx, int end_idx){
 	if (start_idx < end_idx){
-		int pivot = quicksort_partition(elems, start_idx, end_idx, num_elems, bars, renderer);
-		quicksort(elems, num_elems, start_idx, pivot - 1, bars, renderer);
-		quicksort(elems, num_elems, pivot + 1, end_idx, bars, renderer);
+		int pivot = quicksort_partition(start_idx, end_idx);
+		quicksort(start_idx, pivot - 1);
+		quicksort(pivot + 1, end_idx);
 	}
 }
 
 /**
 * Partition function of quicksort.
 */
-uint16_t quicksort_partition(
-		std::vector<uint16_t>& elems,
-		uint16_t start_idx,
-		uint16_t end_idx,
-		uint16_t num_elems,
-		SDL_Rect bars[],
-		SDL_Renderer *renderer){
-
-	std::vector<uint16_t> elems_accessed;
-	SDL_Event event;
-
+uint16_t quicksort_partition(uint16_t start_idx, uint16_t end_idx){
 	// Set the pivot to the median of the first, middle, and last elements.
 	int mid_idx = (start_idx + end_idx) / 2;
-	if (elems[mid_idx] < elems[start_idx]);
+	if (elems[mid_idx] < elems[start_idx]){
 		std::swap(elems[start_idx], elems[mid_idx]);
-	if (elems[end_idx] < elems[start_idx]);
+		num_swaps++;
+	}
+	if (elems[end_idx] < elems[start_idx]){
 		std::swap(elems[start_idx], elems[end_idx]);
-	if (elems[mid_idx] < elems[end_idx]);
+		num_swaps++;
+	}
+	if (elems[mid_idx] < elems[end_idx]){
 		std::swap(elems[mid_idx], elems[end_idx]);
+		num_swaps++;
+	}
 	int pivot = elems[end_idx];
+	num_comps += 3;
 
 	int i = start_idx;
 	for (int j = start_idx; j < end_idx; j++){
+		num_comps++;
 		if (elems[j] < pivot){
 			elems_accessed.push_back(i);
 			if (i != j){
 				std::swap(elems[j], elems[i]);
+				num_swaps++;
 			}
 			i++;
 		}
 
-		// Visualization code below.
 		elems_accessed.push_back(end_idx);
 		elems_accessed.push_back(j);
-		create_frame(elems, num_elems, renderer, bars, elems_accessed);
+		create_frame(elems);
 		
-		// Check for requested shutdown.
-		while (SDL_PollEvent(&event))
-			if (event.type == SDL_QUIT){
-				std::cout << std::endl << "Exiting." << std::endl;
-				exit(0);
-			}
+		check_exit();
 	}
 	if (i < end_idx)
 		std::swap(elems[i], elems[end_idx]);
 	
-	// Visualization code below.
 	elems_accessed.push_back(i);
 	elems_accessed.push_back(end_idx);
-	create_frame(elems, num_elems, renderer, bars, elems_accessed);
+	create_frame(elems);
 	
 	return i;
 }
@@ -234,160 +166,112 @@ uint16_t quicksort_partition(
 /**
 * Mergesort, averages O(n*log(n)) time.
 */
-void bottom_up_mergesort(
-		std::vector<uint16_t>& A,
-		uint16_t num_elems,
-		SDL_Rect bars[],
-		SDL_Renderer *renderer){
+void bottom_up_mergesort(){
+	// Create copy of elems
+	std::vector<uint16_t> B(elems);
 
-	std::vector<uint16_t> B(A);
-	int width, i;
+	int width, i, right_idx, end_idx;
 	for (width = 1; width < num_elems; width = 2 * width){
-		for (i = 0; i < num_elems; i = i + 2 * width)
-			bottom_up_merge(A, i, std::min(i+width, (int) num_elems), std::min(i+2*width, (int) num_elems), B, num_elems, bars, renderer);
-		// Copy B into A.
-		A = B;
+		for (i = 0; i < num_elems; i = i + 2 * width){
+			right_idx = std::min(i+width, (int) num_elems);
+			end_idx = std::min(i+2*width, (int) num_elems);
+			bottom_up_merge(i, right_idx, end_idx, B);
+		}
+		// Copy B into elems
+		elems = B;
 	}
 }
 
 /**
 * Merge function of mergesort.
 */
-void bottom_up_merge(
-		std::vector<uint16_t>& A,
-		uint16_t left_idx,
-		uint16_t right_idx,
-		uint16_t end_idx,
-		std::vector<uint16_t>& B,
-		uint16_t num_elems,
-		SDL_Rect bars[],
-		SDL_Renderer *renderer){
-
-	SDL_Event event;
-	std::vector<uint16_t> elems_accessed;
+void bottom_up_merge(uint16_t left_idx, uint16_t right_idx, uint16_t end_idx, std::vector<uint16_t>& B){
 	int i = left_idx;
 	int j = right_idx;
 	int k;
 	for (k = left_idx; k < end_idx; k++){
 		elems_accessed.push_back(i);
 		elems_accessed.push_back(j);
-		if (i < right_idx && (j >= end_idx || A[i] <= A[j])){
-			B[k] = A[i];
+
+		num_comps++;
+		if (i < right_idx && (j >= end_idx || elems[i] <= elems[j])){
+			B[k] = elems[i];
 			i++;
 		} else {
-			B[k] = A[j];
+			B[k] = elems[j];
 			j++;
 		}
+		num_swaps++;
 
-		// Visualization code below.
 		elems_accessed.push_back(k);
-		create_frame(B, num_elems, renderer, bars, elems_accessed);
+		create_frame(B);
 
-		// Check for requested shutdown.
-		while (SDL_PollEvent(&event))
-			if (event.type == SDL_QUIT){
-				std::cout << std::endl << "Exiting." << std::endl;
-				exit(0);
-			}
+		check_exit();
 	}
 }
 
 /**
 * Heapsort, averages O(n*log(n)) time.
 */
-void heapsort(
-		std::vector<uint16_t>& A,
-		int start_idx,
-		int end_idx,
-		uint16_t num_elems,
-		SDL_Rect bars[],
-		SDL_Renderer *renderer){
-
-	std::vector<uint16_t> elems_accessed;
-	SDL_Event event;
-	heapify(A, start_idx, end_idx, num_elems, bars, renderer);
-
-	int end = end_idx;
+void heapsort(int start_idx, int end_idx){
+	heapify(start_idx, end_idx);
+	int end = end_idx - 1;
 	while (end > start_idx){
-		// Check for requested shutdown.
-		while (SDL_PollEvent(&event))
-			if (event.type == SDL_QUIT){
-				std::cout << std::endl << "Exiting." << std::endl;
-				exit(0);
-			}
-		
-		std::swap(A[end], A[start_idx]);
+		std::swap(elems[end], elems[start_idx]);
+		num_swaps++;
 
-		// Visualization code below.
 		elems_accessed.push_back(start_idx);
 		elems_accessed.push_back(end);
-		create_frame(A, num_elems, renderer, bars, elems_accessed);
+		create_frame(elems);
 
 		end--;
-		sift_down(A, start_idx, start_idx, end, num_elems, bars, renderer);
+		sift_down(start_idx, start_idx, end);
+		
+		check_exit();
 	}
 }
 
 /**
 * Initial heap creation for heapsort.
 */
-void heapify(
-		std::vector<uint16_t>& A,
-		int start_idx,
-		int end_idx,
-		uint16_t num_elems,
-		SDL_Rect bars[],
-		SDL_Renderer *renderer){
-
-	SDL_Event event;
+void heapify(int start_idx, int end_idx){
 	int sift_idx;
-	for (sift_idx = heap_parent(start_idx, end_idx); sift_idx >= start_idx; sift_idx--){
-		// Check for requested shutdown.
-		while (SDL_PollEvent(&event))
-			if (event.type == SDL_QUIT){
-				std::cout << std::endl << "Exiting." << std::endl;
-				exit(0);
-			}
-		sift_down(A, start_idx, sift_idx, end_idx, num_elems, bars, renderer);
+	for (sift_idx = heap_parent(start_idx, end_idx - 1); sift_idx >= start_idx; sift_idx--){
+		check_exit();
+		sift_down(start_idx, sift_idx, end_idx - 1);
 	}
 }
 
 /**
 * Sifting function of heapsort.
 */
-void sift_down(
-		std::vector<uint16_t>& A,
-		int start_idx,
-		int sift_idx,
-		int end_idx,
-		uint16_t num_elems,
-		SDL_Rect bars[],
-		SDL_Renderer *renderer){
-
-	std::vector<uint16_t> elems_accessed;
-	int root = sift_idx;
+void sift_down(int start_idx, int sift_idx, int end_idx){
 	int child, swap;
+	int root = sift_idx;
 	while (heap_left_child(start_idx, root) <= end_idx){
 		child = heap_left_child(start_idx, root);
 		swap = root;
+		elems_accessed.push_back(root);
 
-		if (A[swap] < A[child])
+		num_comps++;
+		if (elems[swap] < elems[child])
 			swap = child;
-		if (child+1 <= end_idx && A[swap] < A[child+1])
+		num_comps++;
+		if (child+1 <= end_idx && elems[swap] < elems[child+1])
 			swap = child + 1;
 		if (swap == root)
 			return;
 		else{
-			std::swap(A[root], A[swap]);
+			std::swap(elems[root], elems[swap]);
+			num_swaps++;
 			root = swap;
+			elems_accessed.push_back(root);
 		}
 
-		// Visualization code below.
-		elems_accessed.push_back(root);
 		elems_accessed.push_back(child);
 		if (child+1 <= end_idx)
 			elems_accessed.push_back(child+1);
-		create_frame(A, num_elems, renderer, bars, elems_accessed);
+		create_frame(elems);
 	}
 }
 
@@ -417,24 +301,25 @@ uint16_t heap_right_child(uint16_t start_idx, uint16_t i){
 * Uses quicksort until a bad case is encountered,
 * then switches to heapsort for the current subsection.
 */
-void introsort(
-		std::vector<uint16_t>& A,
-		int max_depth,
-		int start_idx,
-		int end_idx,
-		uint16_t num_elems,
-		SDL_Rect bars[],
-		SDL_Renderer *renderer){
-
-	std::vector<uint16_t> elems_accessed;
-	int pivot = quicksort_partition(A, start_idx, end_idx, num_elems, bars, renderer);
+void introsort(int max_depth, int start_idx, int end_idx){
+	int pivot = quicksort_partition(start_idx, end_idx);
 	if (end_idx - start_idx <= 1)
 		return;
-	else if (max_depth == 0){
-		heapsort(A, start_idx, end_idx, num_elems, bars, renderer);
-	}
+	else if (max_depth == 0)
+		heapsort(start_idx, end_idx + 1);
 	else{
-		introsort(A, max_depth - 1, start_idx, pivot, num_elems, bars, renderer);
-		introsort(A, max_depth - 1, pivot + 1, end_idx, num_elems, bars, renderer);
+		introsort(max_depth - 1, start_idx, pivot);
+		introsort(max_depth - 1, pivot + 1, end_idx);
 	}
+}
+
+/**
+* Check for requested shutdown.
+*/
+void check_exit(){
+	while (SDL_PollEvent(&event))
+		if (event.type == SDL_QUIT){
+			std::cout << "\nExiting.\n";
+			exit(0);
+		}
 }

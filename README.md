@@ -3,12 +3,14 @@
 This program provides a visual representation of various sorting algorithms.
 
 ## Dependencies
-*	<a href="https://www.libsdl.org/download-2.0.php"><b>SDL</b></a>
+*	<a href="https://www.libsdl.org/download-2.0.php"><b>SDL2</b></a>
+*	<b>SDL2_ttf</b>
+*	<b>SDL2_image</b>
 
 ## Usage
 Build with:
 ```
-g++ main.cpp cpp_files/*.cpp -lSDL2 -std=c++11 -O3 -o sorting
+g++ main.cpp cpp_files/*.cpp -lSDL2 -lSDL2_ttf -lSDL2_image -std=c++11 -O3 -o sorting
 ```
 
 Run with:
