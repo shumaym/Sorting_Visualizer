@@ -237,8 +237,8 @@ void heapsort(int start_idx, int end_idx){
 void heapify(int start_idx, int end_idx){
 	int sift_idx;
 	for (sift_idx = heap_parent(start_idx, end_idx - 1); sift_idx >= start_idx; sift_idx--){
-		check_exit();
 		sift_down(start_idx, sift_idx, end_idx - 1);
+		check_exit();
 	}
 }
 

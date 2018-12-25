@@ -1,8 +1,3 @@
-#include <math.h>
-#include <signal.h>
-#include <getopt.h>
-#include <sstream>
-
 #include "globals.h"
 #include "headers/visuals.h"
 #include "headers/algorithms.h"
@@ -55,6 +50,7 @@ uint32_t num_comps = 0;
 // Records the number of element swaps
 uint32_t num_swaps = 0;
 
+SDL_Window *window;
 SDL_Renderer *renderer;
 TTF_Font *g_font;
 SDL_Surface *text_surface;
@@ -94,8 +90,19 @@ void load_font(){
 	g_font = TTF_OpenFont("fonts/Roboto/Roboto-Regular.ttf", font_size);
 }
 
+/**
+* Called on exit, Frees and destroys.
+*/
+void exit_function(){
+	std::vector<uint16_t>().swap(elems);
+	SDL_DestroyWindow(window);
+	SDL_DestroyRenderer(renderer);
+	SDL_Quit();
+}
+
 int main(int argc, char *argv[]){
 	signal(SIGINT, signal_interrupt);
+	atexit(exit_function);
 
 	// Process passed arguments
 	int opt, prev_ind;
@@ -172,13 +179,12 @@ int main(int argc, char *argv[]){
 	}
 
 	// Create window
-	SDL_Window *window = SDL_CreateWindow("Sorting Visualizer",
+	window = SDL_CreateWindow("Sorting Visualizer",
 		SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
 		screen_width, screen_height,
 		0);
 	if (window == nullptr){
 		log_SDL_error("CreateWindow");
-		SDL_Quit();
 		return 1;
 	}
 
@@ -186,8 +192,6 @@ int main(int argc, char *argv[]){
 	renderer = SDL_CreateRenderer(window, -1, 0);
 	if (renderer == nullptr){
 		log_SDL_error("CreateRenderer");
-		SDL_DestroyWindow(window);
-		SDL_Quit();
 		return 1;
 	}
 
@@ -195,8 +199,6 @@ int main(int argc, char *argv[]){
 	if (TTF_Init() < 0) {
  		std::cerr << "SDL_ttf could not initialize! SDL_ttf Error: " << TTF_GetError() << std::endl;
 		SDL_DestroyWindow(window);
-		SDL_DestroyRenderer(renderer);
-		SDL_Quit();
 		return 1;
 	}
 
@@ -204,9 +206,6 @@ int main(int argc, char *argv[]){
 	load_font();
 	if (g_font == NULL){
 		std::cerr << "Font load error." << std::endl;
-		SDL_DestroyWindow(window);
-		SDL_DestroyRenderer(renderer);
-		SDL_Quit();
 		return 1;
 	}
 
@@ -258,10 +257,5 @@ int main(int argc, char *argv[]){
 
 	// Pause after sorting is complete
 	SDL_Delay(2000);
-
-	// Free and destroy
-	std::vector<uint16_t>().swap(elems);
-	SDL_DestroyWindow(window);
-	SDL_DestroyRenderer(renderer);
-	SDL_Quit();
+	return 0;
 }
