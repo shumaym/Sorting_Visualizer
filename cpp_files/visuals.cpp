@@ -5,10 +5,10 @@
 */
 void create_bars(std::vector<uint16_t>& elems){
 	float bar_section_width = screen_width * (1 - 2 * SCREEN_MARGINS) / num_elems;
-	uint16_t bar_width = bar_section_width * (1 - BAR_SEPARATION);
+	uint16_t bar_width = std::max(int(bar_section_width * (1 - BAR_SEPARATION)), 1);
 	
-	int bar_idx;
-	int x, y, bar_height;
+	uint16_t bar_idx;
+	uint16_t x, y, bar_height;
 	for(bar_idx = 0; bar_idx < num_elems; bar_idx++){
 		// Calculate top-left corner's x coordinate.
 		x = screen_width * SCREEN_MARGINS;

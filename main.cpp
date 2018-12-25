@@ -10,20 +10,24 @@ const option long_opts[] = {
 	{0,0,0,0}
 };
 
-const std::string sort_method_names[7] = {
+const std::string sort_method_names[8] = {
 	"bubble sort",
 	"selection sort",
 	"insertion sort",
 	"quicksort",
 	"mergesort",
 	"heapsort",
-	"introsort"};
+	"introsort",
+	"shellsort"};
 
 // Screen properties.
-uint16_t screen_width = 1500;
-uint16_t screen_height = 1000;
+const uint16_t DEFAULT_SCREEN_WIDTH = 1500;
+const uint16_t DEFAULT_SCREEN_HEIGHT = 1000;
 const float SCREEN_MARGINS = 0.075;
 const float BAR_SEPARATION = 0.2;
+
+uint16_t screen_width = DEFAULT_SCREEN_WIDTH;
+uint16_t screen_height = DEFAULT_SCREEN_HEIGHT;
 
 // RGB colour values.
 const uint8_t COLOUR_BACKGROUND[3] = {0x00, 0x00, 0x00};
@@ -31,9 +35,13 @@ const uint8_t COLOUR_BARS_WHITE[3] = {0xFF, 0xFF, 0xFF};
 const uint8_t COLOUR_BARS_RED[3] = {0xFF, 0x00, 0x00};
 
 // Default parameters.
-uint16_t num_elems = 50;
-uint16_t frame_delay_ms = 50;
-uint16_t sort_method = 3;
+const uint16_t DEFAULT_NUM_ELEMS = 50;
+const uint16_t DEFAULT_FRAME_DELAY_MS = 50;
+const uint16_t DEFAULT_SORT_METHOD = 3;
+
+uint16_t num_elems = DEFAULT_NUM_ELEMS;
+uint16_t frame_delay_ms = DEFAULT_FRAME_DELAY_MS;
+uint16_t sort_method = DEFAULT_SORT_METHOD;
 
 std::random_device random_dev;
 std::mt19937 generator(random_dev());
@@ -105,16 +113,16 @@ int main(int argc, char *argv[]){
 	atexit(exit_function);
 
 	// Process passed arguments
-	int opt, prev_ind;
-	while(prev_ind = optind, (opt = getopt_long(argc, argv, "hn:d:s:", long_opts, &optind)) != EOF){
+	int opt;
+	while((opt = getopt_long(argc, argv, "hn:d:s:", long_opts, &optind)) != EOF){
 		switch(opt){
 			case 'h':
 				std::cout << std::endl << "Options:\n";
-				std::cout << " -n N                        number of elements to sort (default: " << num_elems << ")\n";
-				std::cout << " -d N, --frame-delay N       delay in ms after the window is refreshed (default: " << frame_delay_ms << ")\n";
-				std::cout << " --dimensions XxY            screen dimensions (default: " << screen_width << "x" << screen_height << ")\n";
+				std::cout << " -n N                        number of elements to sort (default: " << DEFAULT_NUM_ELEMS << ")\n";
+				std::cout << " -d N, --frame-delay N       delay in ms after the window is refreshed (default: " << DEFAULT_FRAME_DELAY_MS << ")\n";
+				std::cout << " --dimensions XxY            screen dimensions (default: " << DEFAULT_SCREEN_WIDTH << "x" << DEFAULT_SCREEN_HEIGHT << ")\n";
 				std::cout << " -h, --help                  display this help page and exit\n";
-				std::cout << " -s N, sorting N             sorting method (default: quicksort)\n";
+				std::cout << " -s N, sorting N             sorting method (default: " << sort_method_names[DEFAULT_SORT_METHOD] << ")\n";
 				std::cout << "    0: bubble sort\n";
 				std::cout << "    1: selection sort\n";
 				std::cout << "    2: insertion sort\n";
@@ -122,6 +130,7 @@ int main(int argc, char *argv[]){
 				std::cout << "    4: mergesort\n";
 				std::cout << "    5: heapsort\n";
 				std::cout << "    6: introsort\n";
+				std::cout << "    7: shellsort\n";
 				std::cout << std::endl << std::endl;
 				return 0;
 
@@ -135,7 +144,7 @@ int main(int argc, char *argv[]){
 				break;
 
 			case 'n':
-				if (std::atoi(optarg) >= 2 && std::atoi(optarg) <= pow(2, 16)){
+				if (std::atoi(optarg) >= 2 && std::atoi(optarg) < pow(2, 16)){
 					num_elems = std::atoi(optarg);
 					std::cout << "Number of elements set to " << num_elems << "." << std::endl;
 				}
@@ -144,7 +153,7 @@ int main(int argc, char *argv[]){
 				break;
 
 			case 's':
-				if (std::atoi(optarg) >= 0 && std::atoi(optarg) < 7){
+				if (std::atoi(optarg) >= 0 && std::atoi(optarg) < 8){
 					sort_method = std::atoi(optarg);
 					std::cout << "Sorting method set to " << sort_method_names[sort_method] << "." << std::endl;
 				}
@@ -156,13 +165,17 @@ int main(int argc, char *argv[]){
 				// case for "dimensions" option, gathers dimensions from optarg in form "XxY".
 				std::stringstream ss(optarg);
 				std::string item;
-				std::vector<int> split_strings;
+				std::vector<int32_t> split_strings;
 				int num_items = 0;
 				while (std::getline(ss, item, 'x')){
-					split_strings.push_back(uint16_t (std::atoi(item.c_str())));
+					split_strings.push_back(int32_t(std::atoi(item.c_str())));
 					num_items++;
 				}
-				if (num_items != 2 || split_strings[0] <= 0 || split_strings[1] <= 0)
+				if (num_items != 2
+						|| split_strings[0] <= 0
+						|| split_strings[0] >= pow(2, 16)
+						|| split_strings[1] <= 0
+						|| split_strings[1] >= pow(2, 16))
 					std::cerr << "Invalid screen dimensions. Defaulting to " << screen_width << "x" << screen_height << std::endl;
 				else{
 					screen_width = split_strings[0];
@@ -218,6 +231,7 @@ int main(int argc, char *argv[]){
 	SDL_Rect arr[num_elems];
 	bars = arr;
 
+	uint16_t depth;
 	// Sort using the specified/default sort method
 	switch(sort_method){
 		case 0:
@@ -239,8 +253,11 @@ int main(int argc, char *argv[]){
 			heapsort(0, num_elems);
 			break;
 		case 6:
-			int depth = std::floor(log(num_elems)) * 2;
+			depth = std::floor(log(num_elems)) * 2;
 			introsort(depth, 0, num_elems - 1);
+			break;
+		case 7:
+			shellsort();
 			break;
 	}
 

@@ -31,3 +31,4 @@ Options:
     - ```4```: Mergesort
     - ```5```: Heapsort
     - ```6```: Introsort
+    - ```7```: Shellsort

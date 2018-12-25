@@ -3,9 +3,9 @@
 /**
 * Checks if a vector contains a sorted sequence of elements.
 */
-int check_sorted(std::vector<uint16_t>& elems){
-	int last_elem = elems[0];
-	for (int i = 1; i < num_elems; i++){
+bool check_sorted(std::vector<uint16_t>& elems){
+	uint16_t last_elem = elems[0];
+	for (uint16_t i = 1; i < num_elems; i++){
 		if (elems[i] < last_elem)
 			return 0;
 		last_elem = elems[i];
@@ -27,7 +27,7 @@ void bogo_sort(){
 * Bubble sort, averages O(n^2) time.
 */
 void bubble_sort(){
-	int i, j;
+	uint16_t i, j;
 	bool sorted = false;
 	for (i = 0; i < num_elems - 1 && !sorted; i++){
 		sorted = true;
@@ -53,8 +53,8 @@ void bubble_sort(){
 * Selection sort, averages O(n^2) time.
 */
 void selection_sort(){
-	int i, j, min;
-	int n = elems.size();
+	uint16_t i, j, min;
+	uint16_t n = elems.size();
 
 	for (i = 0; i < n - 1; i++){
 		min = i;
@@ -86,8 +86,8 @@ void selection_sort(){
 * Insertion sort, averages O(n^2) time.
 */
 void insertion_sort(){
-	int j;
-	for (uint16_t i = 1; i < elems.size(); i++){
+	uint16_t i, j;
+	for (i = 1; i < elems.size(); i++){
 		for (j = i; j > 0 && elems[j - 1] > elems[j]; j--){
 			num_comps++;
 			std::swap(elems[j], elems[j - 1]);
@@ -106,10 +106,11 @@ void insertion_sort(){
 /**
 * Quicksort, averages O(n*log(n)) time.
 */
-void quicksort(int start_idx, int end_idx){
+void quicksort(uint16_t start_idx, uint16_t end_idx){
 	if (start_idx < end_idx){
-		int pivot = quicksort_partition(start_idx, end_idx);
-		quicksort(start_idx, pivot - 1);
+		uint16_t pivot = quicksort_partition(start_idx, end_idx);
+		if (pivot != 0)
+			quicksort(start_idx, pivot - 1);
 		quicksort(pivot + 1, end_idx);
 	}
 }
@@ -119,7 +120,7 @@ void quicksort(int start_idx, int end_idx){
 */
 uint16_t quicksort_partition(uint16_t start_idx, uint16_t end_idx){
 	// Set the pivot to the median of the first, middle, and last elements.
-	int mid_idx = (start_idx + end_idx) / 2;
+	uint16_t mid_idx = (start_idx + end_idx) / 2;
 	if (elems[mid_idx] < elems[start_idx]){
 		std::swap(elems[start_idx], elems[mid_idx]);
 		num_swaps++;
@@ -132,11 +133,11 @@ uint16_t quicksort_partition(uint16_t start_idx, uint16_t end_idx){
 		std::swap(elems[mid_idx], elems[end_idx]);
 		num_swaps++;
 	}
-	int pivot = elems[end_idx];
+	uint16_t pivot = elems[end_idx];
 	num_comps += 3;
 
-	int i = start_idx;
-	for (int j = start_idx; j < end_idx; j++){
+	uint16_t i = start_idx;
+	for (uint16_t j = start_idx; j < end_idx; j++){
 		num_comps++;
 		if (elems[j] < pivot){
 			elems_accessed.push_back(i);
@@ -170,7 +171,8 @@ void bottom_up_mergesort(){
 	// Create copy of elems
 	std::vector<uint16_t> B(elems);
 
-	int width, i, right_idx, end_idx;
+	int32_t width;
+	uint16_t i, right_idx, end_idx;
 	for (width = 1; width < num_elems; width = 2 * width){
 		for (i = 0; i < num_elems; i = i + 2 * width){
 			right_idx = std::min(i+width, (int) num_elems);
@@ -186,9 +188,9 @@ void bottom_up_mergesort(){
 * Merge function of mergesort.
 */
 void bottom_up_merge(uint16_t left_idx, uint16_t right_idx, uint16_t end_idx, std::vector<uint16_t>& B){
-	int i = left_idx;
-	int j = right_idx;
-	int k;
+	uint16_t i = left_idx;
+	uint16_t j = right_idx;
+	uint16_t k;
 	for (k = left_idx; k < end_idx; k++){
 		elems_accessed.push_back(i);
 		elems_accessed.push_back(j);
@@ -213,9 +215,9 @@ void bottom_up_merge(uint16_t left_idx, uint16_t right_idx, uint16_t end_idx, st
 /**
 * Heapsort, averages O(n*log(n)) time.
 */
-void heapsort(int start_idx, int end_idx){
+void heapsort(uint16_t start_idx, uint16_t end_idx){
 	heapify(start_idx, end_idx);
-	int end = end_idx - 1;
+	uint16_t end = end_idx - 1;
 	while (end > start_idx){
 		std::swap(elems[end], elems[start_idx]);
 		num_swaps++;
@@ -234,8 +236,8 @@ void heapsort(int start_idx, int end_idx){
 /**
 * Initial heap creation for heapsort.
 */
-void heapify(int start_idx, int end_idx){
-	int sift_idx;
+void heapify(uint16_t start_idx, uint16_t end_idx){
+	int32_t sift_idx;
 	for (sift_idx = heap_parent(start_idx, end_idx - 1); sift_idx >= start_idx; sift_idx--){
 		sift_down(start_idx, sift_idx, end_idx - 1);
 		check_exit();
@@ -245,9 +247,9 @@ void heapify(int start_idx, int end_idx){
 /**
 * Sifting function of heapsort.
 */
-void sift_down(int start_idx, int sift_idx, int end_idx){
-	int child, swap;
-	int root = sift_idx;
+void sift_down(uint16_t start_idx, uint16_t sift_idx, uint16_t end_idx){
+	uint16_t child, swap;
+	uint16_t root = sift_idx;
 	while (heap_left_child(start_idx, root) <= end_idx){
 		child = heap_left_child(start_idx, root);
 		swap = root;
@@ -301,8 +303,8 @@ uint16_t heap_right_child(uint16_t start_idx, uint16_t i){
 * Uses quicksort until a bad case is encountered,
 * then switches to heapsort for the current subsection.
 */
-void introsort(int max_depth, int start_idx, int end_idx){
-	int pivot = quicksort_partition(start_idx, end_idx);
+void introsort(uint16_t max_depth, uint16_t start_idx, uint16_t end_idx){
+	uint16_t pivot = quicksort_partition(start_idx, end_idx);
 	if (end_idx - start_idx <= 1)
 		return;
 	else if (max_depth == 0)
@@ -310,6 +312,44 @@ void introsort(int max_depth, int start_idx, int end_idx){
 	else{
 		introsort(max_depth - 1, start_idx, pivot);
 		introsort(max_depth - 1, pivot + 1, end_idx);
+	}
+}
+
+/**
+* Shellsort, time complexity depends on gap sequence.
+*/
+void shellsort(){
+	// Create gap sequence (simplified Tokuda)
+	std::vector<uint16_t> gaps;
+	uint32_t last_gap = 1;
+	while (last_gap < num_elems / 2){
+		gaps.push_back(last_gap);
+		last_gap = std::ceil(last_gap * 2.25 + 1);
+	}
+	std::reverse(gaps.begin(), gaps.end());
+
+	uint16_t i, j, k, temp, gap;
+	for (i = 0; i < gaps.size(); i++){
+		gap = gaps[i];
+		for (j = gap; j < num_elems; j++){
+			elems_accessed.push_back(j);
+			temp = elems[j];
+			num_comps++;
+			for (k = j; k >= gap && elems[k - gap] > temp; k -= gap){
+				num_comps++;
+				elems_accessed.push_back(k);
+				elems_accessed.push_back(k - gap);
+				elems[k] = elems[k - gap];
+				num_swaps++;
+			}
+			elems_accessed.push_back(k);
+			elems[k] = temp;
+			num_swaps++;
+
+			create_frame(elems);
+
+			check_exit();
+		}
 	}
 }
 
