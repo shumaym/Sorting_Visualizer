@@ -1,24 +1,18 @@
 # Sorting Visualizer
 
-This program provides a visual representation of various sorting algorithms.
+This program provides a visual demonstration of various sorting algorithms.
 
 ## Dependencies
+*	<b>g++</b>
 *	<a href="https://www.libsdl.org/download-2.0.php"><b>SDL2</b></a>
 *	<b>SDL2_ttf</b>
 *	<b>SDL2_image</b>
 
 ## Usage
-Build with:
-```
-g++ main.cpp cpp_files/*.cpp -lSDL2 -lSDL2_ttf -lSDL2_image -std=c++11 -O3 -o sorting
-```
-
-Run with:
-```
-./sorting [OPTIONS]
-```
+Build with ```make```, then run with ```./sorting [OPTIONS]```
 
 Options:
+
 *	```-n N```: Number of elements in the set (default: 50)
 *	```-d N | --frame-delay N```: Delay in ms after the window is refreshed (default: 50)
 *	```--dimensions XxY```: Screen dimensions (default: 1500x1000)
